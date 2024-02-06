@@ -1,3 +1,4 @@
+from flask import Flask
 import psycopg2
 from dash import Dash, dcc, html, dash_table
 import plotly.graph_objs as go
@@ -14,7 +15,6 @@ DB_DATABASE = os.getenv('DB_DATABASE')
 DB_USER = os.getenv('DB_USER')
 DB_PASSWORD = os.getenv('DB_PASSWORD')
 DB_PORT = int(os.getenv('DB_PORT', 5432))
-
 
 # Connect to PostgreSQL database
 conn = psycopg2.connect(
@@ -50,11 +50,14 @@ for row in table_data:
 cursor.close()
 conn.close()
 
-# Create Dash app
-app = Dash(__name__, external_stylesheets=['/static/css/style.css'])
+# Create Flask app instance
+app = Flask(__name__)
 
-# Define layout
-app.layout = html.Div([
+# Create Dash app
+dash_app = Dash(__name__, server=app, external_stylesheets=['/static/css/style.css'])
+
+# Define layout for Dash app
+dash_app.layout = html.Div([
     dcc.Graph(
         id='work-order-status-treemap',
         figure={
@@ -85,5 +88,10 @@ app.layout = html.Div([
     ])
 ])
 
+# Define route for Flask app
+@app.route('/')
+def index():
+    return dash_app.index()
+
 if __name__ == '__main__':
-    app.run_server(debug=False)
+    app.run(debug=True)
